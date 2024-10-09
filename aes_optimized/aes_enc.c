@@ -1,4 +1,7 @@
 #include "aes_enc.h"
+
+typedef void (* EncFunc) (const State *, const State *, State *);
+
 static inline void perform_single_round(const State *, const State *, State *);
 static inline void perform_last_round(const State *, const State *, State *);
 static inline void perform_first_round(const State *, const State *, State *);
@@ -6,7 +9,6 @@ static inline void perform_first_round(const State *, const State *, State *);
 void enc_with_aes128(const State *, const State *, State *);
 void enc_with_aes192(const State *, const State *, State *);
 void enc_with_aes256(const State *, const State *, State *);
-void exit_before_enc(const State *, const State *, State *);
 
 const uint32_t kEncTbl0[0x100] = {
     0xa56363c6, 0x847c7cf8, 0x997777ee, 0x8d7b7bf6, 0x0df2f2ff, 0xbd6b6bd6, 0xb16f6fde, 0x54c5c591,
@@ -148,16 +150,12 @@ const uint32_t kEncTbl3[0x100] = {
     0x82c34141, 0x29b09999, 0x5a772d2d, 0x1e110f0f, 0x7bcbb0b0, 0xa8fc5454, 0x6dd6bbbb, 0x2c3a1616,
 };
 
-void enc_with_aes(State * const inout, const MasterKey * const mk, uint32_t k_sz) {
+void enc_with_aes(State * const inout, const MasterKey * const mk) {
     State rk[0x10];
 
-    void (* enc_funcs[]) (const State *, const State *, State *) = {
-        enc_with_aes128, enc_with_aes192, enc_with_aes256, exit_before_enc
-    };
-
     memset(rk, 0, sizeof rk);
-    schedule_aes_key(mk, k_sz, (uint8_t *)rk);
-    enc_funcs[((k_sz >> 6) - 2) & 0x00000003](inout, rk, inout);
+    schedule_aes_key(mk, (uint8_t *)rk);
+    ((EncFunc []) { enc_with_aes128, enc_with_aes192, enc_with_aes256 })[mk->sz](inout, rk, inout);
 }
 
 void enc_with_aes128(const State * const pt, const State * const rk, State * const ct) {
@@ -183,10 +181,6 @@ void enc_with_aes128(const State * const pt, const State * const rk, State * con
 void enc_with_aes192(const State * const pt, const State * const rk, State * const ct) {}
 
 void enc_with_aes256(const State * const pt, const State * const rk, State * const ct) {}
-
-void exit_before_enc(const State * const pt, const State * const rk, State * const ct) {
-    exit(1);
-}
 
 static inline uint32_t perform_single_round_inner(uint8_t idx0, uint8_t idx1, uint8_t idx2, uint8_t idx3, uint32_t w_in_rk) {
     return kEncTbl0[idx0] ^ kEncTbl1[idx1] ^ kEncTbl2[idx2] ^ kEncTbl3[idx3] ^ w_in_rk;

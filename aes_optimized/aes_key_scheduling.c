@@ -1,15 +1,14 @@
 #include "aes_key_scheduling.h"
 
-static inline uint32_t rol32(uint32_t, uint32_t);
+typedef void (* SchedFunc) (const MasterKey *, uint8_t *);
+
 static inline uint32_t ror32(uint32_t, uint32_t);
 static inline void rol32_u8s(uint8_t *, uint32_t);
-static inline void ror32_u8s(uint8_t *, uint32_t);
 static inline void sub_word(uint8_t *);
 
 void gen_rk128(const MasterKey *, uint8_t *);
 void gen_rk192(const MasterKey *, uint8_t *);
 void gen_rk256(const MasterKey *, uint8_t *);
-void exit_before_scheduling(const MasterKey *, uint8_t *);
 
 const uint8_t kRCons[0xA] = {
     0x01, 0x02, 0x04, 0x08, 0x10,
@@ -35,12 +34,12 @@ const uint8_t kSBox[0x100] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
 };
 
-void schedule_aes_key(const MasterKey * const mk, uint32_t k_sz, uint8_t * const rk) {
-    ((void (*[])(const MasterKey *, uint8_t *)) { gen_rk128, gen_rk192, gen_rk256, exit_before_scheduling })[((k_sz >> 6) - 2) & 0x00000003](mk, rk);
+void schedule_aes_key(const MasterKey * const mk, uint8_t * const rk) {
+    ((SchedFunc []) { gen_rk128, gen_rk192, gen_rk256 })[mk->sz](mk, rk);
 }
 
 void gen_rk128(const MasterKey * const mk, uint8_t * const rk) {
-    memmove(rk, mk->k128, sizeof mk->k128);
+    memmove(rk, mk->k.sz128, sizeof mk->k.sz128);
 
     for (uint32_t i = 0; i < 0x10 * 0xA; i += 0x10) {
         uint8_t t[4];
@@ -65,25 +64,12 @@ void gen_rk256(const MasterKey * const mk, uint8_t * const rk) {
 
 }
 
-void exit_before_scheduling(const MasterKey * const mk, uint8_t * const rk) {
-    exit(1);
-}
-
-static inline uint32_t rol32(uint32_t v, uint32_t n) {
-    return (v << n) | (v >> (32 - n));
-}
-
 static inline uint32_t ror32(uint32_t v, uint32_t n) {
     return (v >> n) | (v << (32 - n));
 }
 
 static inline void rol32_u8s(uint8_t * v, uint32_t n) {
     uint32_t r = ror32(*(uint32_t *)v, n);
-    memmove(v, &r, sizeof r);
-}
-
-static inline void ror32_u8s(uint8_t * v, uint32_t n) {
-    uint32_t r = rol32(*(uint32_t *)v, n);
     memmove(v, &r, sizeof r);
 }
 
