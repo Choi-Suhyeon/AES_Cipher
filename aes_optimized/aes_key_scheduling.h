@@ -18,6 +18,10 @@ typedef struct {
     } k;
 } MasterKey;
 
+static inline int32_t is_valid_mk_sz(int32_t sz) {
+    return (sz >> 31 ^ 1) & ((sz - 3) >> 31);
+}
+
 void schedule_aes_key(const MasterKey *, uint8_t *);
 
 #endif //AES_OPTIMIZED_KEY_SCHEDULING_H

@@ -9,4 +9,4 @@ else()
     add_compile_options(-O2)
 endif()
 
-add_executable(aes_optimized main.c aes_utils.c aes_key_scheduling.c debug.c aes_enc.c)
+add_executable(aes_optimized main.c aes_utils.c aes_key_scheduling.c debug.c aes_enc.c aes_dec.c)
