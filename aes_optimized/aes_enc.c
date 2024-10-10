@@ -4,10 +4,6 @@ static inline void perform_single_round(const State *, const State *, State *);
 static inline void perform_last_round(const State *, const State *, State *);
 static inline void perform_first_round(const State *, const State *, State *);
 
-void enc_with_aes128(const State *, const State *, State *);
-void enc_with_aes192(const State *, const State *, State *);
-void enc_with_aes256(const State *, const State *, State *);
-
 const uint32_t kEncTbl0[0x100] = {
     0xA56363C6, 0x847C7CF8, 0x997777EE, 0x8D7B7BF6, 0x0DF2F2FF, 0xBD6B6BD6, 0xB16F6FDE, 0x54C5C591,
     0x50303060, 0x03010102, 0xA96767CE, 0x7D2B2B56, 0x19FEFEE7, 0x62D7D7B5, 0xE6ABAB4D, 0x9A7676EC,
@@ -148,15 +144,6 @@ const uint32_t kEncTbl3[0x100] = {
     0x82C34141, 0x29B09999, 0x5A772D2D, 0x1E110F0F, 0x7BCBB0B0, 0xA8FC5454, 0x6DD6BBBB, 0x2C3A1616,
 };
 
-void enc_with_aes(State * const inout, const MasterKey * const mk) {
-    typedef void (* Func) (const State *, const State *, State *);
-    State rk[0x10];
-
-    memset(rk, 0, sizeof rk);
-    schedule_aes_key(mk, (uint8_t *)rk);
-    ((Func []) { enc_with_aes128, enc_with_aes192, enc_with_aes256 })[mk->sz](inout, rk, inout);
-}
-
 void enc_with_aes128(const State * const pt, const State * const rk, State * const ct) {
     State
             s = { 0 },
@@ -205,5 +192,5 @@ static inline void perform_last_round(const State * const src, const State * con
 
 static inline void perform_first_round(const State * const src, const State * const rk, State * const dst) {
     memmove(dst->bytes, src->bytes, sizeof src->bytes);
-    add_round_key(dst, rk);
+    xor_two_states(dst, rk);
 }

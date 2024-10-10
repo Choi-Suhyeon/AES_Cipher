@@ -4,10 +4,6 @@ static inline uint32_t ror32(uint32_t, uint32_t);
 static inline void rol32_u8s(uint8_t *, uint32_t);
 static inline void sub_word(uint8_t *);
 
-void gen_rk128(const MasterKey *, uint8_t *);
-void gen_rk192(const MasterKey *, uint8_t *);
-void gen_rk256(const MasterKey *, uint8_t *);
-
 const uint8_t kRCons[0xA] = {
     0x01, 0x02, 0x04, 0x08, 0x10,
     0x20, 0x40, 0x80, 0x1B, 0x36,
@@ -32,13 +28,8 @@ const uint8_t kSBox[0x100] = {
     0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16,
 };
 
-void schedule_aes_key(const MasterKey * const mk, uint8_t * const rk) {
-    typedef void (* Func) (const MasterKey *, uint8_t *);
-    ((Func []) { gen_rk128, gen_rk192, gen_rk256 })[mk->sz](mk, rk);
-}
-
-void gen_rk128(const MasterKey * const mk, uint8_t * const rk) {
-    memmove(rk, mk->k.sz128, sizeof mk->k.sz128);
+void schedule_aes128(const MasterKey * const mk, uint8_t * const rk) {
+    memmove(rk, mk->sz128, sizeof mk->sz128);
 
     for (uint32_t i = 0; i < 0x10 * 0xA; i += 0x10) {
         uint8_t t[4];
@@ -55,11 +46,11 @@ void gen_rk128(const MasterKey * const mk, uint8_t * const rk) {
     }
 }
 
-void gen_rk192(const MasterKey * const mk, uint8_t * const rk) {
+void schedule_aes192(const MasterKey * const mk, uint8_t * const rk) {
 
 }
 
-void gen_rk256(const MasterKey * const mk, uint8_t * const rk) {
+void schedule_aes256(const MasterKey * const mk, uint8_t * const rk) {
 
 }
 

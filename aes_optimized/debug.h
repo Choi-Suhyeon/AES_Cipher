@@ -4,7 +4,7 @@
 #include <memory.h>
 #include <stdio.h>
 
-#include "aes_utils.h"
+#include "crypto_common.h"
 
 void debug_state(const char *, const State *);
 

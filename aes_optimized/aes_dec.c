@@ -179,15 +179,6 @@ const uint32_t kDecTbl3[0x100] = {
     0x397101A8, 0x08DEB30C, 0xD89CE4B4, 0x6490C156, 0x7B6184CB, 0xD570B632, 0x48745C6C, 0xD04257B8,
 };
 
-void dec_with_aes(State * const inout, const MasterKey * const mk) {
-    typedef void (* Func) (const State *, const State *, State *);
-    State rk[0x10];
-
-    memset(rk, 0, sizeof rk);
-    schedule_aes_key(mk, (uint8_t *)rk);
-    ((Func []) { dec_with_aes128, dec_with_aes192, dec_with_aes256 })[mk->sz](inout, rk, inout);
-}
-
 void dec_with_aes128(const State * const pt, const State * const rk, State * const ct) {
     State
         s = { 0 },
@@ -236,12 +227,12 @@ static inline void perform_last_round(const State * const src, const State * con
     memmove(dst->bytes, src->bytes, sizeof src->bytes);
     inv_sub_bytes(dst);
     inv_shift_rows(dst);
-    add_round_key(dst, rk);
+    xor_two_states(dst, rk);
 }
 
 static inline void perform_first_round(const State * const src, const State * const rk, State * const dst) {
     memmove(dst->bytes, src->bytes, sizeof src->bytes);
-    add_round_key(dst, rk);
+    xor_two_states(dst, rk);
 }
 
 static inline void inv_shift_rows(State * const s) {
